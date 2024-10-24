@@ -347,15 +347,32 @@ import re #regular expresions gods.
 import ipdb
 
 email_format = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-user_list = []
+user_list = [
+    {
+      "id": 1,
+      "username": "burena",
+      "email": "test@dev.com",
+      "is_active": True,
+      "address": [
+        {
+          "city": "si",
+          "state": "alli",
+          "country": "nunca jamas"
+        }
+      ],
+      "roles": [
+        "user"
+      ]
+    }
+]
 
 class Address(BaseModel):
     city:str
     state:str
     country:str
 
-
-    
+class UpdateRoleAtrribute(BaseModel):
+    roles:list[str]
 
 class User(BaseModel):
     id:int
@@ -364,6 +381,7 @@ class User(BaseModel):
     is_active:bool = True
     address:list[Address]
     roles:list
+
 
     @field_validator("email")
     def email_validator(cls, value): 
@@ -406,10 +424,11 @@ def update_users(id:int, user:User):
         user_list[user_index] = user
         return {'message':'user updated', 'user_object':user_list[user_index]}
 
-@app.patch("/users/{id}/roles", tags=['Users'])
-def update_users_role(id:int, roles:list ):
-    user_index = next((index for index, value in enumerate(user_list) if value.id == id))
+@app.patch("/users/{id}/roles", tags=['Users'],description="este endopoint acutaliza el atributo roles de los objetos usuarios.")
+def update_users_role(id:int, roles:UpdateRoleAtrribute ):
+    user_index = next((index for index, value in enumerate(user_list) if value['id'] == id))
     if user_index == None:
         raise HTTPException(status_code=404, detail="User Does Not Exist")
     else:
-        pass
+        user_list[user_index]['roles']=roles.roles
+        return {'message':"Roles attribute updated", "updated_object":user_list[user_index]}
