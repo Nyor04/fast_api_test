@@ -406,4 +406,10 @@ def update_users(id:int, user:User):
         user_list[user_index] = user
         return {'message':'user updated', 'user_object':user_list[user_index]}
 
-
+@app.patch("/users/{id}/roles", tags=['Users'])
+def update_users_role(id:int, roles:list ):
+    user_index = next((index for index, value in enumerate(user_list) if value.id == id))
+    if user_index == None:
+        raise HTTPException(status_code=404, detail="User Does Not Exist")
+    else:
+        pass
