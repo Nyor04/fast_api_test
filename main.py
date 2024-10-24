@@ -348,32 +348,58 @@ import ipdb
 
 email_format = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 user_list = []
+
+class Address(BaseModel):
+    city:str
+    state:str
+    country:str
+
+
+    
+
 class User(BaseModel):
     id:int
     username:str
-    email:str
+    email:str = 'test@dev.com'
     is_active:bool = True
+    address:list[Address]
+    roles:list
 
-    @field_validator("id")
-    def unique_id_validator(cls,value): 
-        if any(product.id == value for product in user_list):
-            raise ValueError(f"User id must be unique!, id {value} already in use")
+    @field_validator("email")
+    def email_validator(cls, value): 
+        if not isinstance(value, str):  
+            raise ValueError("Email must be a string.")
+        if not re.match(email_format, value):
+            raise ValueError("Invalid email format.")
+        return value
+    
+    @field_validator('roles')
+    def roles_validator(cls,value):
+        if not value:
+            raise ValueError("User must have at least 1 rol assigned.")
         return value
 
+        
 
 
 @app.get("/users", tags=['Users'])
 def get_users():
     return user_list
 
+@app.get("/users/{id}", tags=['Users'])
+def get_users(id:int):
+    return user_list[id]
+
 @app.post("/users", tags=['Users'])
 def create_users(user:User):
+    if any(product.id == user.id for product in user_list):
+        return {'message':f"User id must be unique!, id {user.id} already in use"}
     user_list.append(user)
     return {'message':'User added', 'user_object':user_list}
 
 @app.put("/users/{id}", tags=['Users'])
 def update_users(id:int, user:User):
-    user_index = next((index for index, value in enumerate(user_list) if value[id] == id))
+    user_index = next((index for index, value in enumerate(user_list) if value.id == id))
     if user_index == None:
         raise HTTPException(status_code=404, detail="User Does Not Exist")
     else:
