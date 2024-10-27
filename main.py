@@ -1,10 +1,14 @@
-from fastapi import (
-    Response,
-    FastAPI,
-    Body,
-    HTTPException
-)  # importar la clase de fastAPI es el primer paso para poder usar el framework.
-from typing import Union
+from fastapi import Depends, Request, Response, FastAPI, Body, HTTPException
+from fastapi.security import HTTPBearer
+from fastapi.security.http import HTTPAuthorizationCredentials 
+from jwt_manager import jwt_generator, jwt_validator
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, field_validator
+import re #regular expresions gods.
+import ipdb
+
+
+
 
 app = FastAPI(
     title="Movie Anything API",
@@ -18,48 +22,48 @@ def read_root():  # <--- se ejecutara esta funcion
     return {"message": "hello World!"}  # para este ejemplo, deberia retornar un Hello world.
 
 
-# interaccion con la API: se puede tener rutas dinamicas usando placeholders, estos van en llaves. los valores puestos aca son dinamicos como Pks.
-@app.get("/items/{item_id}",tags=["generic"])  # <-- estos place holders se les conoce como parametros de ruta.
-def read_item(item_id: int,):  # <-- el parametro de ruta tomado de la url pasa como argumento a la funcion a ejecutar cuando se llama la url (en este caso /items/{item_id})
-    return {"item_id": item_id}  # retornando el json como de costumbre.
+# # interaccion con la API: se puede tener rutas dinamicas usando placeholders, estos van en llaves. los valores puestos aca son dinamicos como Pks.
+# @app.get("/items/{item_id}",tags=["generic"])  # <-- estos place holders se les conoce como parametros de ruta.
+# def read_item(item_id: int,):  # <-- el parametro de ruta tomado de la url pasa como argumento a la funcion a ejecutar cuando se llama la url (en este caso /items/{item_id})
+#     return {"item_id": item_id}  # retornando el json como de costumbre.
 
 
-# parametros de busqueda.
-@app.get("/items/",tags=["generic"])
-def read_item(skip: int = 0, limit: int = 10):  # <--- declarar parametros en la funcion a ejecutar cuando se hace un get request a la URL se le conocen como parametros de busqueda. es como hacer querys en la URL usando "?" como indicador de un parametro para luego darle un valor.
-    return {"skip": skip, "limit": limit}
+# # parametros de busqueda.
+# @app.get("/items/",tags=["generic"])
+# def read_item(skip: int = 0, limit: int = 10):  # <--- declarar parametros en la funcion a ejecutar cuando se hace un get request a la URL se le conocen como parametros de busqueda. es como hacer querys en la URL usando "?" como indicador de un parametro para luego darle un valor.
+#     return {"skip": skip, "limit": limit}
 
-"""
-Ejemplo :http://127.0.0.1:8000/items/?skip=10&limit=20, recibirás:
-
-
-{
-    "skip": 10,
-    "limit": 20
-}
-Ejemplo :http://127.0.0.1:8000/items/, en teoria recibes recibirás:
+# """
+# Ejemplo :http://127.0.0.1:8000/items/?skip=10&limit=20, recibirás:
 
 
-{
-    "skip": 0,
-    "limit": 10
-}
-
-debido a que son valores por defecto de estos parametros.
-"""
+# {
+#     "skip": 10,
+#     "limit": 20
+# }
+# Ejemplo :http://127.0.0.1:8000/items/, en teoria recibes recibirás:
 
 
-#
-@app.get("/custom_response/{uname}",description="para dar respuestas personalizadas se debe importar la clase response de la libreria de fastapi",tags=["generic"])
-def get_custom_response(uname: str):
-    message = f"Hola {uname}, esta es una respuesta personalizada de FAST API."
-    return Response(content=message, media_type="text/plain")
+# {
+#     "skip": 0,
+#     "limit": 10
+# }
 
-"""
-recibimos un string en el parametro {uname}, el cual debe ser uns tring para luego insertar dicho string en un
-mensaje de respuesta personalizado, favor notar que se debe indicar el media type y pasar el atributo content, el charset por defecto es utf-8.
+# debido a que son valores por defecto de estos parametros.
+# """
 
-"""
+
+# #
+# @app.get("/custom_response/{uname}",description="para dar respuestas personalizadas se debe importar la clase response de la libreria de fastapi",tags=["generic"])
+# def get_custom_response(uname: str):
+#     message = f"Hola {uname}, esta es una respuesta personalizada de FAST API."
+#     return Response(content=message, media_type="text/plain")
+
+# """
+# recibimos un string en el parametro {uname}, el cual debe ser uns tring para luego insertar dicho string en un
+# mensaje de respuesta personalizado, favor notar que se debe indicar el media type y pasar el atributo content, el charset por defecto es utf-8.
+
+# """
 
 # lista de diccionarios de peliculas para hacer mocks de retorno hosteada en una DB.
 movie_list = [ 
@@ -342,28 +346,26 @@ def delete_movies(
 
 
 #endpoints relacionados con users creados apartir de aqui.
-from pydantic import BaseModel, field_validator, validate_email
-import re #regular expresions gods.
-import ipdb
 
 email_format = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 user_list = [
-    {
-      "id": 1,
-      "username": "burena",
-      "email": "test@dev.com",
-      "is_active": True,
-      "address": [
-        {
-          "city": "si",
-          "state": "alli",
-          "country": "nunca jamas"
-        }
-      ],
-      "roles": [
-        "user"
-      ]
+    {    
+        "id": 1,
+        "username": "burena",
+        "email": "test@dev.com",
+        "is_active": True,
+        "address": [
+            {
+            "city": "si",
+            "state": "alli",
+            "country": "nunca jamas"
+            }
+        ],
+        "roles": [
+            "user"
+        ]
     }
+    
 ]
 
 class Address(BaseModel):
@@ -382,6 +384,7 @@ class User(BaseModel):
     address:list[Address]
     roles:list
 
+  
 
     @field_validator("email")
     def email_validator(cls, value): 
@@ -397,10 +400,27 @@ class User(BaseModel):
             raise ValueError("User must have at least 1 rol assigned.")
         return value
 
-        
+class LoginData(BaseModel):
+    email:str
+    password:str
+
+    @field_validator("email")
+    def email_validator(cls, value): 
+        if not isinstance(value, str):  
+            raise ValueError("Email must be a string.")
+        if not re.match(email_format, value):
+            raise ValueError("Invalid email format.")
+        return value
+
+class JWTBearer(HTTPBearer):
+    async def __call__(self, request: Request) :
+        auth = await super().__call__(request)
+        data = jwt_validator(auth.credentials)
+        if data['email'] != "mock@email.com" or data["password"] != "mockpassword":
+            raise HTTPException(status_code=401,detail="Credenciales invalidas")
 
 
-@app.get("/users", tags=['Users'])
+@app.get("/users", tags=['Users'], dependencies=[Depends(JWTBearer())])
 def get_users():
     return user_list
 
@@ -432,3 +452,12 @@ def update_users_role(id:int, roles:UpdateRoleAtrribute ):
     else:
         user_list[user_index]['roles']=roles.roles
         return {'message':"Roles attribute updated", "updated_object":user_list[user_index]}
+    
+@app.post("/login", tags=['auth'])
+def login(user:LoginData):
+    if user.email == "mock@email.com" and user.password == "mockpassword":
+        token:str = jwt_generator(user.model_dump())
+        return JSONResponse(content=token, status_code=200)
+    else:
+        message = {"message":"Auth failed, check your credentials"}
+        return JSONResponse(content=message)
