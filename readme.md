@@ -1,20 +1,20 @@
 
 
-```markdown
+
 # The Anything API
 
 Este es un proyecto de ejemplo para una API en Python, puse a prueba varios conceptosque ofrece este framework.
 
 lo que mas puedo resaltar es: 
 
-comprendi el flujo de trabajo de fastAPI
-me enamore de pydantic
-typer es cool
-SQLAlchemy es bastante hermoso.
-toque ligeramente conceptos de autenticacion, especialmente JWT Token bearer
-API routes
-concepto de API Services 
-practique la modularizacion del proyecto
+- Comprendi el flujo de trabajo de fastAPI
+- Me enamore de pydantic
+- Typer es cool
+- SQLAlchemy es bastante hermoso.
+- Toque ligeramente conceptos de autenticacion, especialmente JWT Token bearer
+- API routes
+- Concepto de API Services 
+- Practique la modularizacion del proyecto
 
 en realidad estoy muy feliz con todo el contenido que aprendi en esta investigacion quiza en un futuro haga mas actualizaciones
 10-29-2024.
@@ -27,6 +27,7 @@ en realidad estoy muy feliz con todo el contenido que aprendi en esta investigac
   ```bash
   python --version
   ```
+
 
 ## Pasos para la instalación
 
@@ -98,5 +99,5 @@ Si deseas hacer un despliegue en plataformas como GitLab o GitHub Actions, neces
 
 ¡Listo! Ahora deberías poder instalar y ejecutar el proyecto tanto en local como en entornos remotos.
 happy Coding (❁´◡`❁)
-``` 
+
 
