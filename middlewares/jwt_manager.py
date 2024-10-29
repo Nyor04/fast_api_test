@@ -1,7 +1,7 @@
 from os import getenv
 from dotenv import load_dotenv
 from jwt import decode, encode
-import ipdb
+
 
 load_dotenv()
 
@@ -15,7 +15,6 @@ def jwt_generator(data: dict) -> str:
 
 
 def jwt_validator(token:str) -> dict:
-    ipdb.set_trace()
     parsed_token: str = token.strip('"')
     data: dict = decode(parsed_token,algorithms=[secret_algorithm],key=secret_key)
     return data
